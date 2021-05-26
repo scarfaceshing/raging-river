@@ -1,1 +1,1 @@
-![GitHub Logo](/documentation/image_1.png)
+![Image of Exam](https://github.com/scarfaceshing/raging-river/blob/master/documentation/image_1.PNG)
