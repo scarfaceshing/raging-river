@@ -1,0 +1,1 @@
+![GitHub Logo](/documentation/image_1.png)

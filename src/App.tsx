@@ -33,8 +33,8 @@ export default class App extends React.Component<{}, Validator>{
       headCells: [
         { id: '1', name: 'order_number', label: 'ORDER NUMBER & DATE' },
         { id: '2', name: 'status', label: 'SHIPPING STATUS' },
-        { id: '3', name: 'customer', label: 'CUSTOMER ADDRESS' },
-        { id: '4', name: 'order_details.value',  label: 'ORDER VALUE' }
+        { id: '3', name: 'address', label: 'CUSTOMER ADDRESS' },
+        { id: '4', name: 'order_value',  label: 'ORDER VALUE' }
       ]
     }
   }
@@ -66,14 +66,19 @@ export default class App extends React.Component<{}, Validator>{
     return stabilizedThis.map((el) => el[0]);
   }
 
-  descendingComparator = (a: any, b: any, orderBy: string) => {
-    if (b[orderBy] < a[orderBy]) {
-      return -1;
+  descendingComparator = (a: any, b: any, orderBy: any) => {
+
+    const compareA = a[orderBy];
+    const compareB = b[orderBy];
+
+      if (compareB < compareA) {
+        return -1;
+      }
+      if (compareB > compareA) {
+        return 1;
     }
-    if (b[orderBy] > a[orderBy]) {
-      return 1;
-    }
-    return 0;
+    
+      return 0;
   }
 
   handleRequestSort = (name: string) => {
@@ -130,6 +135,28 @@ export default class App extends React.Component<{}, Validator>{
     })
   }
 
+  newData() {
+    let data: any = []
+    let address: string = "";
+    let tab: string = (this.state.value === 0) ? "" : "shipped" ;
+
+    this.state.data.map((item) => {
+      address += `${item.customer.address.line1} ${item.customer.address.line2} ${item.customer.address.city} ${item.customer.address.state} ${item.customer.address.zip}`
+
+      data.push({
+        "order_number": item.order_number,
+        "oddate": item.order_details.date,
+        "sddate": item.shipping_details.date,
+        "address": address,
+        "status": item.status,
+        "order_value": item.order_details.value
+      })
+
+      address = ""
+    })
+
+    return data
+  }
 
 
   public render() {
@@ -173,8 +200,8 @@ export default class App extends React.Component<{}, Validator>{
                           <TableRow>
                             <TableCell>
                               <Checkbox
-                                indeterminate={this.state.selected.length > 0 && this.state.selected.length < this.state.data.length}
-                                checked={this.state.data.length > 0 && this.state.selected.length === this.state.data.length}
+                                indeterminate={this.state.selected.length > 0 && this.state.selected.length < this.newData().length}
+                                checked={this.newData().length > 0 && this.state.selected.length === this.newData().length}
                                 onChange={this.handleSelectAllClick}
                               />
                             </TableCell>
@@ -188,7 +215,7 @@ export default class App extends React.Component<{}, Validator>{
                           </TableRow>
                         </TableHead>
                       <TableBody>
-                          {this.stableSort(this.state.data, this.getComparator(this.state.order, this.state.orderBy)).slice(this.state.page * this.state.rowsPerPage, this.state.page * this.state.rowsPerPage + this.state.rowsPerPage).map((row: any, index: number) => {
+                          {this.stableSort(this.newData(), this.getComparator(this.state.order, this.state.orderBy)).slice(this.state.page * this.state.rowsPerPage, this.state.page * this.state.rowsPerPage + this.state.rowsPerPage).map((row: any, index: number) => {
                              const isItemSelected = this.isSelected(row.order_number);
                           
                             return (
@@ -202,7 +229,7 @@ export default class App extends React.Component<{}, Validator>{
                                       # {row.order_number}
                                     </Grid>
                                     <Grid xs={12}>
-                                      Ordered: {moment(row.order_details.date).format('ll')}
+                                      Ordered: {moment(row.oddate).format('ll')}
                                     </Grid>
                                   </Grid>
                                 </TableCell>
@@ -212,24 +239,21 @@ export default class App extends React.Component<{}, Validator>{
                                       <Chip label={row.status}></Chip>
                                     </Grid>
                                     <Grid xs={12}>
-                                      {moment(row.shipping_details.date).format('D/MMM/YYYY')}
+                                      {moment(row.sddate).format('D/MMM/YYYY')}
+                                    </Grid>
+                                  </Grid>
+                                </TableCell>
+                                <TableCell>
+                                  <Grid xs={12}>
+                                    <Grid xs={4}>
+                                      { row.address }
                                     </Grid>
                                   </Grid>
                                 </TableCell>
                                 <TableCell>
                                   <Grid xs={12}>
                                     <Grid xs={12}>
-                                      {row.customer.address.line1} {row.customer.address.line2}
-                                    </Grid>
-                                    <Grid xs={12}>
-                                      {row.customer.address.city} {row.customer.address.state}   {row.customer.address.zip}
-                                    </Grid>
-                                  </Grid>
-                                </TableCell>
-                                <TableCell>
-                                  <Grid xs={12}>
-                                    <Grid xs={12}>
-                                      $ {row.order_details.value}
+                                      $ {row.order_value}
                                     </Grid>
                                     <Grid xs={12}>
                                       USD
@@ -249,7 +273,7 @@ export default class App extends React.Component<{}, Validator>{
                         className="tfooter"
                         rowsPerPageOptions={[1, 2, 3]}
                         component="div"
-                        count={this.state.data.length}
+                        count={this.newData().length}
                         rowsPerPage={this.state.rowsPerPage}
                         page={this.state.page}
                         onChangePage={this.handleChangePage}
